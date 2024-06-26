@@ -86,7 +86,7 @@ class GeneratedContentAssetGeneratorTest extends GeneratedContentKernelTestBase 
    * @return array<mixed>
    *   Test data.
    */
-  public function dataProviderGenerate(): array {
+  public static function dataProviderGenerate(): array {
     return [
       [GeneratedContentAssetGenerator::ASSET_TYPE_TXT],
       [
@@ -251,7 +251,7 @@ class GeneratedContentAssetGeneratorTest extends GeneratedContentKernelTestBase 
    * @return array<mixed>
    *   Test data.
    */
-  public function dataProviderGenerateTypes(): array {
+  public static function dataProviderGenerateTypes(): array {
     // phpcs:disable Drupal.Arrays.Array.LongLineDeclaration
     return [
       [GeneratedContentAssetGenerator::GENERATE_TYPE_RANDOM, GeneratedContentAssetGenerator::ASSET_TYPE_TXT],
@@ -310,7 +310,7 @@ class GeneratedContentAssetGeneratorTest extends GeneratedContentKernelTestBase 
    * @return array<mixed>
    *   Test data.
    */
-  public function dataProviderGeneratorRandomImage(): array {
+  public static function dataProviderGeneratorRandomImage(): array {
     return [
       [
         GeneratedContentAssetGenerator::ASSET_TYPE_PNG,
@@ -385,7 +385,7 @@ class GeneratedContentAssetGeneratorTest extends GeneratedContentKernelTestBase 
    * @return array<mixed>
    *   Test data.
    */
-  public function dataProviderGeneratorStaticFile(): array {
+  public static function dataProviderGeneratorStaticFile(): array {
     // phpcs:disable Drupal.Arrays.Array.LongLineDeclaration
     return [
       [GeneratedContentAssetGenerator::ASSET_TYPE_DOC, 'application/msword'],

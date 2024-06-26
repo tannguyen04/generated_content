@@ -42,7 +42,7 @@ class GeneratedContentHelperUnitTest extends GeneratedContentUnitTestBase {
    * @return array<mixed>
    *   Provider test data.
    */
-  public function dataProviderArraySliceCircular(): array {
+  public static function dataProviderArraySliceCircular(): array {
     return [
       [[], 0, 0, []],
       [[], 5, 10, []],
