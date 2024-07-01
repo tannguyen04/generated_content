@@ -18,6 +18,10 @@
     },
     "extra": {
         "phpcodesniffer-search-depth": 10,
-        "patches": {}
+        "patches": {
+          "drupal/config_filter": {
+            "Automated Drupal 11 compatibility fixes for config_filter": "https://git.drupalcode.org/project/config_filter/-/merge_requests/9.patch"
+          }
+        }
     }
 }

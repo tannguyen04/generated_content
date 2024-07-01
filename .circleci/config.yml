@@ -172,26 +172,25 @@ workflows:
           filters:
             tags:
               only: /.*/
-# Enable D11 once https://www.drupal.org/project/config_filter/issues/3428542 is resolved
-#      - test-php-8.2-next:
-#          filters:
-#            tags:
-#              only: /.*/
+     - test-php-8.2-next:
+         filters:
+           tags:
+             only: /.*/
       - test-php-8.3:
           filters:
             tags:
               only: /.*/
-#      - test-php-8.3-next:
-#          filters:
-#            tags:
-#              only: /.*/
+     - test-php-8.3-next:
+         filters:
+           tags:
+             only: /.*/
       - deploy:
           requires:
             - test-php-8.2
             - test-php-8.2-legacy
-            #- test-php-8.2-next
+            - test-php-8.2-next
             - test-php-8.3
-            #- test-php-8.3-next
+            - test-php-8.3-next
           filters:
             tags:
               only: /.*/
