@@ -20,12 +20,30 @@ job-test: &job-test
     - checkout
 
     - run:
-        name: Build the codebase
-        command: .devtools/build-codebase.sh
+        name: Upgrade sqlite3
+        command: |
+          wget https://www.sqlite.org/2024/sqlite-autoconf-3450300.tar.gz -O /tmp/sqlite.tar.gz
+          tar -xzf /tmp/sqlite.tar.gz -C /tmp
+          cd /tmp/sqlite-autoconf-3450300
+          ./configure CFLAGS="-DSQLITE_ENABLE_COLUMN_METADATA=1" --prefix=/usr/local
+          make && sudo make install
+          sudo ldconfig
+          echo "export LD_LIBRARY_PATH=/usr/local/lib" >> $BASH_ENV
+
+    - run:
+        name: Install PCOV
+        command: |
+          sudo pecl install pcov
+          echo "extension=pcov.so" | sudo tee -a /usr/local/etc/php/conf.d/pcov.ini
+          echo "pcov.enabled=1" | sudo tee -a /usr/local/etc/php/conf.d/pcov.ini
+
+    - run:
+        name: Assemble the codebase
+        command: .devtools/assemble.sh
 
     - run:
         name: Start built-in PHP server
-        command: .devtools/start-server.sh
+        command: .devtools/start.sh
 
     - run:
         name: Provision site
@@ -52,49 +70,42 @@ job-test: &job-test
         working_directory: build
 
     - run:
-        name: Lint code with Twigcs
-        command: vendor/bin/twigcs || [ "${CI_TWIGCS_IGNORE_FAILURE:-0}" -eq 1 ]
+        name: Lint code with Twig CS Fixer
+        command: vendor/bin/twig-cs-fixer || [ "${CI_TWIGCSFIXER_IGNORE_FAILURE:-0}" -eq 1 ]
         working_directory: build
 
     - run:
         name: Run tests
-        command: .devtools/test.sh || [ "${CI_TEST_IGNORE_FAILURE:-0}" -eq 1 ]
-
-    - run:
-        name: Process artifacts
-        command: |
-          if [ -d "build/web/sites/simpletest/browser_output" ]; then
-            mkdir -p /tmp/artifacts/simpletest
-            cp -Rf "build/web/sites/simpletest/browser_output/." /tmp/artifacts/simpletest
-          fi
-        when: always
+        command: vendor/bin/phpunit || [ "${CI_TEST_IGNORE_FAILURE:-0}" -eq 1 ]
+        working_directory: build
+        environment:
+          BROWSERTEST_OUTPUT_DIRECTORY: /tmp
 
     - store_test_results:
-        path: /tmp/test_results
+        path: .logs/test_results
 
     - store_artifacts:
-        path: /tmp/artifacts
+        path: build/web/sites/simpletest/browser_output
+
+    - store_artifacts:
+        path: .logs/coverage
+
+    - run:
+        name: Upload code coverage reports to Codecov
+        command: |
+          if [ -z "${CIRCLE_TAG-}" ] && [ -n "${CODECOV_TOKEN-}" ] && [ -d .logs/coverage/phpunit ]; then
+            curl -Os https://cli.codecov.io/latest/linux/codecov && sudo chmod +x codecov
+            ./codecov --verbose upload-process --fail-on-error -n "circleci-$CIRCLE_JOB" -s .logs/coverage
+          fi
 
 jobs:
-  test-php-8.1:
-    <<: *container_config
-    docker:
-      - image: cimg/php:8.1-browsers
-    <<: *job-test
-
   test-php-8.2:
     <<: *container_config
     docker:
       - image: cimg/php:8.2-browsers
-    <<: *job-test
-
-  test-php-8.1-legacy:
-    <<: *container_config
-    docker:
-      - image: cimg/php:8.1-browsers
     environment:
-      DRUPAL_VERSION: 9.5
-      DRUPAL_PROJECT_SHA: 9.x
+      DRUPAL_VERSION: 10.1
+      DRUPAL_PROJECT_SHA: 10.x
     <<: *job-test
 
   test-php-8.2-legacy:
@@ -102,8 +113,8 @@ jobs:
     docker:
       - image: cimg/php:8.2-browsers
     environment:
-      DRUPAL_VERSION: 9.5
-      DRUPAL_PROJECT_SHA: 9.x
+      DRUPAL_VERSION: 10.1
+      DRUPAL_PROJECT_SHA: 10.x
     <<: *job-test
 
   test-php-8.2-next:
@@ -111,7 +122,26 @@ jobs:
     docker:
       - image: cimg/php:8.2-browsers
     environment:
-      DRUPAL_VERSION: 10@beta
+      DRUPAL_VERSION: 11@alpha
+      DRUPAL_PROJECT_SHA: 11.x
+    <<: *job-test
+
+  test-php-8.3:
+    <<: *container_config
+    docker:
+      - image: cimg/php:8.3-browsers
+    environment:
+      DRUPAL_VERSION: stable
+      DRUPAL_PROJECT_SHA: 10.x
+    <<: *job-test
+
+  test-php-8.3-next:
+    <<: *container_config
+    docker:
+      - image: cimg/php:8.3-browsers
+    environment:
+      DRUPAL_VERSION: 11@alpha
+      DRUPAL_PROJECT_SHA: 11.x
     <<: *job-test
 
   deploy:
@@ -134,15 +164,7 @@ workflows:
   version: 2
   commit:
     jobs:
-      - test-php-8.1:
-          filters:
-            tags:
-              only: /.*/
       - test-php-8.2:
-          filters:
-            tags:
-              only: /.*/
-      - test-php-8.1-legacy:
           filters:
             tags:
               only: /.*/
@@ -150,17 +172,26 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - test-php-8.2-next:
+# Enable D11 once https://www.drupal.org/project/config_filter/issues/3428542 is resolved
+#      - test-php-8.2-next:
+#          filters:
+#            tags:
+#              only: /.*/
+      - test-php-8.3:
           filters:
             tags:
               only: /.*/
+#      - test-php-8.3-next:
+#          filters:
+#            tags:
+#              only: /.*/
       - deploy:
           requires:
-            - test-php-8.1
             - test-php-8.2
-            - test-php-8.1-legacy
             - test-php-8.2-legacy
-            - test-php-8.2-next
+            #- test-php-8.2-next
+            - test-php-8.3
+            #- test-php-8.3-next
           filters:
             tags:
               only: /.*/

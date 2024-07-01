@@ -9,6 +9,8 @@
  * bundle that should be generated.
  */
 
+declare(strict_types=1);
+
 use Drupal\generated_content\Helpers\GeneratedContentHelper;
 use Drupal\taxonomy\Entity\Term;
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\generated_content\Unit;
 
 use Drupal\Tests\generated_content\Traits\GeneratedContentTestMockTrait;

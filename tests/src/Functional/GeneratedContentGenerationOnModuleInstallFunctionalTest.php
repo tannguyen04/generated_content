@@ -49,7 +49,7 @@ class GeneratedContentGenerationOnModuleInstallFunctionalTest extends GeneratedC
    * @return array<mixed>
    *   Test data.
    */
-  public function dataProviderGenerateOnModuleInstall(): array {
+  public static function dataProviderGenerateOnModuleInstall(): array {
     return [
       // None from installed modules.
       [
